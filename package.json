@@ -1,0 +1,17 @@
+{
+  "name": "basecamp",
+  "description": "A package for accessing the basecamp API",
+  "tags" : ["basecamp", "util", "utility", "api"],
+  "author": "mark-hahn",
+  "main" : "basecamp.js",
+  "version" : "0.1.0",
+  "dependencies": {
+    "request": ">= 2.0.0",
+    "underscore": ">= 1.1.0"
+  },
+  "repository" : {
+	"type" : "git",
+	"url" : "http://github.com/mark-hahn/basecamp.git"
+  },
+  "engine": "node >= 0.4.1"
+}
