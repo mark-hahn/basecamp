@@ -52,7 +52,7 @@ Client represents your client application.
 
     authNewUrl = client.getAuthNewUrl(state);
 
-Returns the url that you app's web page should use when taking the user to the Basecamp website to link their account with your app. Since this module runs in the server the url will need to be sent to the client. Usually this would be through an ajax request but could be sent with the html page in some situations. 
+Returns the url that your app's web page should use when taking the user to the Basecamp website to link their account with your app. Since this module runs in the server the url will need to be sent to the client. Usually this would be through an ajax request but could be sent with the html page in some situations. 
 
 *Hint:* This url could actually be a constant string in your web page.  You would have to figure out that URL yourself.  However, using the `getAuthNewUrl` method will guarantee the url is correct in future releases.
 
@@ -76,7 +76,7 @@ The return value of this method should be ignored.
 
 ### Account Class
   
-    account = new basecamp.Account(client, accountId, refresh_token, callback);
+    new basecamp.Account(client, accountId, refresh_token, callback);
     
 Account represents a Basecamp account that your user is linked to.
 
@@ -108,7 +108,7 @@ The `callback` signature is `(error, result)`.  `error` is a standard error para
 
 ### Project Class
   
-    project = new basecamp.Project(account, projectId, callback);
+    new basecamp.Project(account, projectId, callback);
  
 Project represents a single project in a Bascamp account.
 
