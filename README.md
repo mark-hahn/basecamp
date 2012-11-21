@@ -30,7 +30,7 @@ Will be installable via npm when it reaches alpha.
 
 ## Usage
 
-The basecamp wrapper module interface follows the Basecamp api [documentation](https://github.com/37signals/bcx-api) closely.  Refer to the api document for help understanding the commands.  The wrapper module command constants follow the documentation headings (see the `req` method below).
+The basecamp wrapper module interface follows the Basecamp api [documentation](https://github.com/37signals/bcx-api) closely.  Refer to the api document for help understanding the commands.  The wrapper module command constants follow the documentation headings (see the `project.req` method below).
 
 Three classes are available.
 
@@ -122,7 +122,7 @@ The return value of this method should be ignored.  You might notice that this i
 
 ### Project Method req
 
-    account.req(options, callback);
+    project.req(options, callback);
 
 Finally we get to the meat of the wrapper.  `req` is the method used to perform most of the requests to the Basecamp api.
 
