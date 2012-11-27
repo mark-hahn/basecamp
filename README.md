@@ -1,6 +1,6 @@
 # basecamp
 
-A wrapper for the basecamp json api
+A nodejs module that wraps the Basecamp json api.
 
 The basecamp github project can be found [here](https://github.com/mark-hahn/basecamp).
 
