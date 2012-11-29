@@ -9,14 +9,24 @@ The basecamp github project can be found [here](https://github.com/mark-hahn/bas
 - Supports new Basecamp json api (not old xml)
 - Built-in oauth2 support
 - Tools to link app to Basecamp account by visiting 37signals website
-- Supports all api requests, GET, POST, and PUT
+- Supports all api requests (see status), GET, POST, and PUT
 - Terminology, params, and command names match api documentation
-- All data in/out are javascript objects
+- Data inand out can be objects or pipes
 - Supports simultaneous multiple accounts
 
-## Status:
+## Status (pre-alpha):
 
-Not ready for usage yet.  OAuth2 login and account connection works.  The framework to execute commands works but the command table only has a few commands so far.
+It is currently usable, but it is not used in production yet and there are no tests yet. The command table only has the commands needed to work with messages/comments ...
+
+- get_projects 			       
+- get_projects_archived 	
+- create_project 		      
+- create_attachment		    
+- get_project			         
+- get_topics				         
+- get_message			         
+- create_message			      
+- create_comment			      
 
 *TODO* ...
 
@@ -24,9 +34,11 @@ Not ready for usage yet.  OAuth2 login and account connection works.  The framew
 - Support express/connect for linking accounts callback
 - Tests
 
+I could use some help.  Adding items to the command table is quite easy.  I don't know express so someone else is going to have to add that.  Tests will be hard since we can't easily mock the campbase api.
+
 ## Installation
 
-Will be installable via npm when it reaches alpha.
+npm i basecamp
 
 ## Usage
 
@@ -102,6 +114,8 @@ The return value of this method should be ignored.  You might notice that this i
 
 - `data` is the data used to create a project in the "create_project" command. A sample value would be `{name: "This is my new project!", description: "It's going to run real smooth"}`.
 
+- `pipe` also provides data as in the `data` option, but it is a pipe instead of an object.
+
 If you are only using the `op` property then you can use that string value for the `options` param instead of an object. 
     
 The `callback` signature is `(error, result)`.  `error` is a standard error param from a node callback. `result` is the object returned by the Bascamp api request (account.req).  The contents of `result` varies based on the command `options.op`.  See the Basecamp [documentation](https://github.com/37signals/bcx-api) for details.
@@ -130,11 +144,15 @@ Finally we get to the meat of the wrapper.  `req` is the method used to perform 
 
 - `op` is the operation code that specifies the request command to use. There are many possible values but you can figure them out from the api [documentation](https://github.com/37signals/bcx-api).  The operation code is the section header in the docs in lower case with an underscore separating words.  For example, the command described in the section "Get message" uses "get_message" as the command string.
 
+- `messageId` is the Basecamp message id for any command that refers to a message. 
+ 
+- `query` is an optional object that will be added to the url. For example, in the `get_topics` command you will need to specify a page when there are 50 or more topics.  The query option might look like `{page:2}`.  This would create a url like `/projects/1/topics.json?page=2`.
+
 - `data` is the data used in the body of POST and PUT requests.
 
-If you are only using the `op` property then you can use that string value for the `options` param instead of an object. 
+- `pipe` also provides data as in the `data` option, but it is a pipe instead of an object.
 
-There will be more options required as all the commands are implemented.  For example the "get_message" command mentioned above will require the `options.messageId` value.
+If you are only using the `op` property then you can use that string value for the `options` param instead of an object. 
 
 ## Credits
 
