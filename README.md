@@ -5,7 +5,7 @@ A nodejs module that wraps the Basecamp json api.
 The basecamp github project can be found [here](https://github.com/mark-hahn/basecamp).
 
 ## Features
- 
+
 - Supports new Basecamp json api (not old xml)
 - Built-in oauth2 support
 - Tools to link app to Basecamp account by visiting 37signals website
@@ -18,15 +18,15 @@ The basecamp github project can be found [here](https://github.com/mark-hahn/bas
 
 It is currently usable, but it is not used in production yet and there are no tests yet. The command table only has the commands needed to work with messages/comments ...
 
-- get_projects 			       
-- get_projects_archived 	
-- create_project 		      
-- create_attachment		    
-- get_project			         
-- get_topics				         
-- get_message			         
-- create_message			      
-- create_comment			      
+- get_projects
+- get_projects_archived
+- create_project
+- create_attachment
+- get_project
+- get_topics
+- get_message
+- create_message
+- create_comment
 
 *TODO* ...
 
@@ -47,7 +47,7 @@ The basecamp wrapper module interface follows the Basecamp api [documentation](h
 Three classes are available.
 
 ### Client Class
-  
+
     client = new basecamp.Client(client_id, client_secret, redirect_uri, userAgent);
 
 Client represents your client application.
@@ -64,7 +64,7 @@ Client represents your client application.
 
     authNewUrl = client.getAuthNewUrl(state);
 
-Returns the url that your app's web page should use when taking the user to the Basecamp website to link their account with your app. Since this module runs in the server the url will need to be sent to the client. Usually this would be through an ajax request but could be sent with the html page in some situations. 
+Returns the url that your app's web page should use when taking the user to the Basecamp website to link their account with your app. Since this module runs in the server the url will need to be sent to the client. Usually this would be through an ajax request but could be sent with the html page in some situations.
 
 *Hint:* This url could actually be a constant string in your web page.  You would have to figure out that URL yourself.  However, using the `getAuthNewUrl` method will guarantee the url is correct in future releases.
 
@@ -78,7 +78,7 @@ Your app server should route an incoming request for the `redirect_uri` specifie
 
 The `callback` signature is `(error, userInfo)`.  `error` is a standard error param from a node callback.
 
-`userInfo` is an object that you should store for future use.  Usually this would be stored in a db record for the user.  Some of it's data will be needed for future method calls.  
+`userInfo` is an object that you should store for future use.  Usually this would be stored in a db record for the user.  Some of it's data will be needed for future method calls.
 
 If you specifed a `state` param in the `getAuthNewUrl` method, then the state object will be available as `userInfo.state`.
 
@@ -87,9 +87,9 @@ The userinfo also contains a Basecamp user object in `userInfo.identity` and an 
 The return value of this method should be ignored.
 
 ### Account Class
-  
+
     new basecamp.Account(client, accountId, refresh_token, callback);
-    
+
 Account represents a Basecamp account that your user is linked to.
 
 `client` is an instance of the `Client` class.
@@ -110,18 +110,18 @@ The return value of this method should be ignored.  You might notice that this i
 
 `options` specifies the request.  Available properties include ...
 
-- `op` is the operation code that specifies the request command to use. It's values can be "get_projects", "get_projects_archived", and "create_project".  
+- `op` is the operation code that specifies the request command to use. It's values can be "get_projects", "get_projects_archived", and "create_project".
 
 - `data` is the data object used to create a project in the "create_project" command. A sample value would be `{name: "This is my new project!", description: "It's going to run real smooth"}`.
 
-If you are only using the `op` property then you can use that string value for the `options` param instead of an object. 
-    
+If you are only using the `op` property then you can use that string value for the `options` param instead of an object.
+
 The `callback` signature is `(error, result)`.  `error` is a standard error param from a node callback. `result` is the object returned by the Bascamp api request (account.req).  The contents of `result` varies based on the command `options.op`.  See the Basecamp [documentation](https://github.com/37signals/bcx-api) for details.
 
 ### Project Class
-  
+
     new basecamp.Project(account, projectId, callback);
- 
+
 Project represents a single project in a Bascamp account.
 
 `account` is an instance of the `Account` class.
@@ -142,17 +142,19 @@ Finally we get to the meat of the wrapper.  `req` is the method used to perform 
 
 - `op` is the operation code that specifies the request command to use. There are many possible values but you can figure them out from the api [documentation](https://github.com/37signals/bcx-api).  The operation code is the section header in the docs in lower case with an underscore separating words.  For example, the command described in the section "Get message" uses "get_message" as the command string.
 
-- `messageId` is the Basecamp message id for any command that refers to a message. 
- 
+- `messageId` is the Basecamp message id for any command that refers to a message.
+
+- `headers` is a normal headers object, such as {'Content-Length': 12453}.
+
 - `query` is an optional object that will be added to the url. For example, in the `get_topics` command you will need to specify a page when there are 50 or more topics.  The query option might look like `{page:2}`.  This would create a url like `/projects/1/topics.json?page=2`.
 
 - `data` is a data object used for the request body in POST/PUT commands. Note that the content type is set to 'application/json' and the length is automatically provided unless overriden with the headers option.
 
 - `stream` also provides data as in the `data` option, but it is a stream instead of an object. The content type and length will usually need to be provided in the headers option.
 
-- `headers` is a normal headers object, such as {'Content-Length': 12453}.
+- `file` is a path to a file. When present the contents of the file are sent as the body.  The content-length header is automatically set.  The content-type is not set and will usually need to be provided in the headers option.
 
-If you are only using the `op` property then you can use that string value for the `options` param instead of an object. 
+If you are only using the `op` property then you can use that string value for the `options` param instead of an object.
 
 ## Credits
 

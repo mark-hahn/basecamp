@@ -150,7 +150,7 @@ exports.Account = class Account
         if headers then _.extend requestOpts.headers, headers
 
         reqCB = (error, response, bodyTxt) =>
-            console.log 'basecamp: req callback', error, bodyTxt
+#            console.log 'basecamp: req callback', error, bodyTxt
 
             if not error
                 try
@@ -164,32 +164,42 @@ exports.Account = class Account
                 cb error
                 return
 
-            console.log '\nbasecamp: req response ' + op + ' ' +
-                        @userInfo.identity.email_address + ' ' + @account.name, body
+#            console.log '\nbasecamp: req response ' + op + ' ' +
+#                        @userInfo.identity.email_address + ' ' + @account.name, body
 
             cb null, body
 
 #        console.log '\n\nbasecamp: req url ' + requestOpts.url, {stream, file, requestOpts}
 
-        abortStream = no
-
         if stream or file
-            if file then stream = fs.createReadStream file
+            abortStream = no
 
-            reqst = stream.pipe request requestOpts
+            streamIt = ->
+                reqst = stream.pipe request requestOpts
 
-            reqst.on 'response', (resp) ->
-                if resp.statusCode isnt 200
-                    reqCB 'bad stream status code ' + resp.statusCode + ', ' + requestOpts.url
-                    abortStream = yes
+                reqst.on 'response', (resp) ->
+                    if resp.statusCode isnt 200
+                        reqCB 'bad stream status code ' + resp.statusCode + ', ' + requestOpts.url
+                        abortStream = yes
 
-            reqst.on 'data', (resp) ->
-                if not abortStream then reqCB null, null, resp.toString()
+                reqst.on 'data', (resp) ->
+                    if not abortStream then reqCB null, null, resp.toString()
 
-            reqst.on 'error', (resp) ->
-                if not abortStream
-                    reqCB 'stream error ' + requestOpts.url + ', ' + JSON.stringify resp
-                    abortStream = yes
+                reqst.on 'error', (resp) ->
+                    if not abortStream
+                        reqCB 'stream error ' + requestOpts.url + ', ' + JSON.stringify resp
+                        abortStream = yes
+
+            if stream then streamIt(); return
+
+            fs.stat file, (err, stats) ->
+                if err
+                    reqCB 'fs.stat error ' + requestOpts.url + JSON.stringify err
+                    return
+
+                _.extend requestOpts.headers, 'Content-Length': stats.size
+                stream = fs.createReadStream file
+                streamIt()
         else
             request requestOpts, reqCB
 
