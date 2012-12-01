@@ -11,7 +11,7 @@ The basecamp github project can be found [here](https://github.com/mark-hahn/bas
 - Tools to link app to Basecamp account by visiting 37signals website
 - Supports all api requests (see status), GET, POST, and PUT
 - Terminology, params, and command names match api documentation
-- Data inand out can be objects or pipes
+- Data inand out can be objects or streams
 - Supports simultaneous multiple accounts
 
 ## Status (pre-alpha):
@@ -112,9 +112,7 @@ The return value of this method should be ignored.  You might notice that this i
 
 - `op` is the operation code that specifies the request command to use. It's values can be "get_projects", "get_projects_archived", and "create_project".  
 
-- `data` is the data used to create a project in the "create_project" command. A sample value would be `{name: "This is my new project!", description: "It's going to run real smooth"}`.
-
-- `pipe` also provides data as in the `data` option, but it is a pipe instead of an object.
+- `data` is the data object used to create a project in the "create_project" command. A sample value would be `{name: "This is my new project!", description: "It's going to run real smooth"}`.
 
 If you are only using the `op` property then you can use that string value for the `options` param instead of an object. 
     
@@ -148,9 +146,11 @@ Finally we get to the meat of the wrapper.  `req` is the method used to perform 
  
 - `query` is an optional object that will be added to the url. For example, in the `get_topics` command you will need to specify a page when there are 50 or more topics.  The query option might look like `{page:2}`.  This would create a url like `/projects/1/topics.json?page=2`.
 
-- `data` is the data used in the body of POST and PUT requests.
+- `data` is a data object used for the request body in POST/PUT commands. Note that the content type is set to 'application/json' and the length is automatically provided unless overriden with the headers option.
 
-- `pipe` also provides data as in the `data` option, but it is a pipe instead of an object.
+- `stream` also provides data as in the `data` option, but it is a stream instead of an object. The content type and length will usually need to be provided in the headers option.
+
+- `headers` is a normal headers object, such as {'Content-Length': 12453}.
 
 If you are only using the `op` property then you can use that string value for the `options` param instead of an object. 
 
