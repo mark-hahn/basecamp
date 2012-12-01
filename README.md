@@ -1,8 +1,8 @@
-# basecamp
+# Basecamp
 
 A nodejs module that wraps the Basecamp json api.
 
-The basecamp github project can be found [here](https://github.com/mark-hahn/basecamp).
+The Basecamp github project can be found [here](https://github.com/mark-hahn/Basecamp).
 
 ## Features
 
@@ -30,11 +30,12 @@ It is currently usable, but it is not used in production yet and there are no te
 
 *TODO* ...
 
-- Complete command table
-- Support express/connect for linking accounts callback
+- Complete the command table
 - Tests
+- Convenience functions for common commands
+- Support express/connect for linking accounts callback
 
-I could use some help.  Adding items to the command table is quite easy.  I don't know express so someone else is going to have to add that.  Tests will be hard since we can't easily mock the campbase api.
+I could use some help.  Adding items to the command table is quite easy.  I don't know express so someone else is going to have to add that.  Tests will be hard since we can't easily mock the Basecamp api.
 
 ## Installation
 
@@ -42,13 +43,14 @@ npm i basecamp
 
 ## Usage
 
-The basecamp wrapper module interface follows the Basecamp api [documentation](https://github.com/37signals/bcx-api) closely.  Refer to the api document for help understanding the commands.  The wrapper module command constants follow the documentation headings (see the `project.req` method below).
+The Basecamp wrapper module interface follows the Basecamp api [documentation](https://github.com/37signals/bcx-api) closely.  Refer to the api document for help understanding the commands.  The wrapper module command constants follow the documentation headings (see the `project.req` method below).
 
-Three classes are available.
+
+*Three classes are available...*
 
 ### Client Class
 
-    client = new basecamp.Client(client_id, client_secret, redirect_uri, userAgent);
+    client = new Basecamp.Client(client_id, client_secret, redirect_uri, userAgent);
 
 Client represents your client application.
 
@@ -88,7 +90,7 @@ The return value of this method should be ignored.
 
 ### Account Class
 
-    new basecamp.Account(client, accountId, refresh_token, callback);
+    new Basecamp.Account(client, accountId, refresh_token, callback);
 
 Account represents a Basecamp account that your user is linked to.
 
@@ -108,19 +110,18 @@ The return value of this method should be ignored.  You might notice that this i
 
 `req` is a method used to perform a request to a Basecamp account. This is rarely used compared to the `project.req` outlined below.
 
-`options` specifies the request.  Available properties include ...
+`options` specifies the request.  For a list of possible options see the Project req method below. Note that only commands that don't require a project id can be used on an Account req.  These include
 
-- `op` is the operation code that specifies the request command to use. It's values can be "get_projects", "get_projects_archived", and "create_project".
-
-- `data` is the data object used to create a project in the "create_project" command. A sample value would be `{name: "This is my new project!", description: "It's going to run real smooth"}`.
-
-If you are only using the `op` property then you can use that string value for the `options` param instead of an object.
+- get_projects
+- get_projects_archived
+- create_attachment
+- create_project
 
 The `callback` signature is `(error, result)`.  `error` is a standard error param from a node callback. `result` is the object returned by the Bascamp api request (account.req).  The contents of `result` varies based on the command `options.op`.  See the Basecamp [documentation](https://github.com/37signals/bcx-api) for details.
 
 ### Project Class
 
-    new basecamp.Project(account, projectId, callback);
+    new Basecamp.Project(account, projectId, callback);
 
 Project represents a single project in a Bascamp account.
 
@@ -152,7 +153,7 @@ Finally we get to the meat of the wrapper.  `req` is the method used to perform 
 
 - `stream` also provides data as in the `data` option, but it is a stream instead of an object. The content type and length will usually need to be provided in the headers option.
 
-- `file` is a path to a file. When present the contents of the file are sent as the body.  The content-length header is automatically set.  The content-type is not set and will usually need to be provided in the headers option.
+- `file` is a path to a file. When present the contents of the file are sent as the body.  If the content length `headers` option is not set it will be set for you.  The content type is not set and will usually need to be provided.
 
 If you are only using the `op` property then you can use that string value for the `options` param instead of an object.
 
