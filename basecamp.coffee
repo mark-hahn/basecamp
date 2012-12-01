@@ -4,6 +4,7 @@
         check for expired accesses
 ###
 
+fs		= require 'fs'
 url		= require 'url'
 _		= require 'underscore'
 request = require 'request'
@@ -106,7 +107,7 @@ exports.Account = class Account
         if not @account then cb 'basecamp: req error, no account'; return
 
         if typeof opts is 'string' then opts = op: opts
-        {op, projectId, messageId, query, body, stream, headers} = opts
+        {op, projectId, messageId, query, body, stream, file, headers} = opts
         if not (path = opPaths[op])
             cb 'basecamp: req error, invalid opcode ' + op
             return
@@ -117,11 +118,14 @@ exports.Account = class Account
                 Authorization: 'Bearer ' + @userInfo.access_token
 
         if path[0] is 'P'
-            if not body and not stream
-                cb 'basecamp: post/put req body/stream missing', opts
+            if not body and not stream and not file
+                cb 'basecamp: post/put req body/stream/file missing', opts
                 return
+
             _.extend requestOpts.headers, 'Content-Type': 'application/json'
-            if body then requestOpts.body = JSON.stringify body
+
+            if body then requestOpts.json = body
+
             requestOpts.method = path.split('/')[0]
             path = path[requestOpts.method.length ..]
 
@@ -165,43 +169,27 @@ exports.Account = class Account
 
             cb null, body
 
-        console.log '\n\nbasecamp: req url ' + requestOpts.url, stream, requestOpts
+#        console.log '\n\nbasecamp: req url ' + requestOpts.url, {stream, file, requestOpts}
 
-        if stream
+        abortStream = no
 
-            reqst = request requestOpts
+        if stream or file
+            if file then stream = fs.createReadStream file
 
-            console.log '\n\nbasecamp: reqst', reqst
+            reqst = stream.pipe request requestOpts
 
-            reqst.on 'request', (resp) ->
-                console.log 'basecamp: pipe request', resp
             reqst.on 'response', (resp) ->
-                console.log 'basecamp: pipe response', resp
-            reqst.on 'error', (resp) ->
-                console.log 'basecamp: pipe error', resp
-            reqst.on 'end', (resp) ->
-                console.log 'basecamp: pipe end', resp
+                if resp.statusCode isnt 200
+                    reqCB 'bad stream status code ' + resp.statusCode + ', ' + requestOpts.url
+                    abortStream = yes
+
             reqst.on 'data', (resp) ->
-                console.log 'basecamp: pipe data', resp.toString()
-            reqst.on 'close', (resp) ->
-                console.log 'basecamp: pipe close', resp
-            reqst.on 'complete', (resp) ->
-                console.log 'basecamp: pipe complete', resp
-            reqst.on 'drain', (resp) ->
-                console.log 'basecamp: pipe drain', resp
-            reqst.on 'abort', (resp) ->
-                console.log 'basecamp: pipe abort', resp
+                if not abortStream then reqCB null, null, resp.toString()
 
-            console.log '\n\nbasecamp: before pipe', {reqst, stream}
-
-            stream.on 'data',  (resp) ->
-                console.log '\n\nbasecamp.cof: stream data', resp.length
-
-            stream.on 'error',  (resp) ->
-                console.log '\n\nbasecamp.cof: stream error', resp
-
-#            stream.pipe process.stdout
-
+            reqst.on 'error', (resp) ->
+                if not abortStream
+                    reqCB 'stream error ' + requestOpts.url + ', ' + JSON.stringify resp
+                    abortStream = yes
         else
             request requestOpts, reqCB
 
