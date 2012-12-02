@@ -149,7 +149,7 @@ exports.Account = class Account
 
 		reqCB = (error, response, bodyTxt) =>
 
-			console.log 'basecamp: req callback, err: ', error, ', resp type', (typeof bodyTxt)
+#			console.log 'basecamp: req callback, err: ', error, ', resp type', (typeof bodyTxt)
 
 			if typeof bodyTxt is 'string'
 				try
@@ -232,6 +232,7 @@ opPaths =
 	create_attachment:		'POST/attachments.json'
 
 	get_project:			'/projects/~projectId~.json'
+	get_accesses:			'/projects/~projectId~/accesses.json'
 	get_topics:				'/projects/~projectId~/topics.json'
 	get_message:			'/projects/~projectId~/messages/~messageId~.json'
 	create_message:			'POST/projects/~projectId~/messages.json'
