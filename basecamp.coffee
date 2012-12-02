@@ -79,6 +79,7 @@ exports.Account = class Account
 
 	constructor: (@client, @accountId, refresh_token, cb) ->
 		@account = null
+
 		client._getToken null, refresh_token, (@err, @userInfo) =>
 			if @err or not @userInfo.accounts
 				console.log '\nbasecamp: _getToken error',
@@ -103,23 +104,23 @@ exports.Account = class Account
 				return
 			cb null, @
 
-	req: (opts, cb) ->
+	req: (op, options, cb) ->
 		if not @account then cb 'basecamp: req error, no account'; return
 
-		if typeof opts is 'string' then opts = op: opts
-		{op, projectId, messageId, query, body, stream, file, headers} = opts
 		if not (path = opPaths[op])
 			cb 'basecamp: req error, invalid opcode ' + op
 			return
+
+		{section, id, query, headers, body, stream, file} = options
 
 		requestOpts =
 			headers:
 				'User-Agent':  @client.userAgent
 				Authorization: 'Bearer ' + @userInfo.access_token
 
-		if path[0] is 'P'
+		if path[0] in ['P', 'D']
 			if not body and not stream and not file
-				cb 'basecamp: post/put req body/stream/file missing', opts
+				cb 'basecamp: req body/stream/file missing', op, options
 				return
 
 			if body then requestOpts.json = body
@@ -127,14 +128,21 @@ exports.Account = class Account
 			requestOpts.method = path.split('/')[0]
 			path = path[requestOpts.method.length ..]
 
-		if path.indexOf('~projectId~') isnt -1
-			projectId ?= @projectId
-			if not projectId then cb 'req error'; return
-			path = path.replace '~projectId~', projectId
+		urlReplacements = [
+			['~primaryId~',  @primaryId]
+			['~optionalId~', @primaryId]
+			['~section~',     section  ]
+			['~secondaryId~', id       ]
+		]
 
-		if path.indexOf('~messageId~') isnt -1
-			if not messageId then cb 'req error'; return
-			path = path.replace '~messageId~', messageId
+		for replacement in urlReplacements when path.indexOf(replacement[0]) isnt -1
+			if not replacement[1]
+				if replacement[0] isnt '~optionalId~'
+					cb 'option ' + replacement[0][1..-2] + ' missing'
+					return
+				path = path.replace '/' + replacement[0], ''
+			else
+				path = path.replace replacement[0], replacement[1]
 
 		qStr = ''
 		if query
@@ -213,27 +221,75 @@ exports.Account = class Account
 
 
 exports.Project = class Project
+	constructor: (@account, @projectId) -> @primaryId = 'projects/' + @projectId
+	req: (opts, cb) -> @account.req opts, cb
 
-	constructor: (@account, @projectId) ->
 
-	req: (opts, cb) ->
-		if typeof opts is 'string'
-			opts = {op: opts, @projectId}
-		else
-			opts = _.extend {}, opts, {@projectId}
+exports.Calendar = class Calendar
+	constructor: (@account, @calendarId) -> @primaryId = 'calendars/' + @calendarId
+	req: (opts, cb) -> @account.req opts, cb
 
-		@account.req opts, cb
+
+exports.Person = class Person
+	constructor: (@account, @personId) -> @primaryId = 'people/' + @personId
+	req: (opts, cb) -> @account.req opts, cb
 
 
 opPaths =
-	get_projects: 			'/projects.json'
-	get_projects_archived: 	'/projects/archived.json'
-	create_project: 		'POST/projects.json'
-	create_attachment:		'POST/attachments.json'
+	# https://github.com/37signals/bcx-api/blob/master/sections/accesses.md
+	get_accesses:				'/~primaryId~/accesses.json'
+	grant_access:				'POST/~primaryId~/accesses.json'
+	revoke_access:				'DELETE/~primaryId~/accesses/~secondaryId~.json'
 
-	get_project:			'/projects/~projectId~.json'
-	get_accesses:			'/projects/~projectId~/accesses.json'
-	get_topics:				'/projects/~projectId~/topics.json'
-	get_message:			'/projects/~projectId~/messages/~messageId~.json'
-	create_message:			'POST/projects/~projectId~/messages.json'
-	create_comment:			'POST/projects/~projectId~/messages/~messageId~/comments.json'
+	# https://github.com/37signals/bcx-api/blob/master/sections/attachments.md
+	create_attachment:			'POST/attachments.json'
+	get_attachments:			'/~optionalId~/attachments.json'
+
+	# https://github.com/37signals/bcx-api/blob/master/sections/calendar_events.md
+	get_calendar_events:		'/~primaryId~/calendar_events.json'
+	get_calendar_events_past:	'/~primaryId~/calendar_events/past.json'
+	get_calendar_event:			'/~primaryId~/calendar_events/~secondaryId~.json'
+	create_calendar_event:		'POST/~primaryId~/calendar_events.json'
+	update_calendar_event:		'PUT/~primaryId~/calendar_events/~secondaryId~.json'
+	delete_calendar_event:		'DELETE/~primaryId~/calendar_events/~secondaryId~.json'
+
+	# https://github.com/37signals/bcx-api/blob/master/sections/calendars.md
+	get_calendars:				'/calendars.json'
+	get_calendar:				'/~primaryId~.json'
+	create_calendar:			'POST/calendars.json'
+	update_calendar:			'PUT/~primaryId~.json'
+	delete_calendar:			'DELETE/~primaryId~.json'
+
+	# https://github.com/37signals/bcx-api/blob/master/sections/comments.md
+	create_comment:				'POST/~primaryId~/~section~/~secondaryId~/comments.json'
+	delete_comment:				'DELETE/~primaryId~/comments/~secondaryId~.json'
+
+	# https://github.com/37signals/bcx-api/blob/master/sections/documents.md
+	get_documents:				'/~optionalId~/documents.json'
+	get_document:				'/~primaryId~/documents/~secondaryId~.json'
+	create_document:			'POST/~primaryId~/documents.json'
+	update_document:			'PUT/~primaryId~/documents/~secondaryId~.json'
+	delete_document:			'DELETE/~primaryId~/documents/~secondaryId~.json'
+
+	# https://github.com/37signals/bcx-api/blob/master/sections/events.md
+	get_global_events:			'/events.json'
+	get_project_events:			'/~primaryId~/events.json'
+	get_person_events:			'/~primaryId~/events.json'
+
+	# https://github.com/37signals/bcx-api/blob/master/sections/messages.md
+	get_message:				'/~primaryId~/messages/~messageId~.json'
+	create_message:				'POST/~primaryId~/messages.json'
+	update_message:				'PUT/~primaryId~/messages/~secondaryId~.json'
+	delete_message:				'DELETE/~primaryId~/messages/~secondaryId~.json'
+
+
+	get_projects: 				'/projects.json'
+	get_projects_archived: 		'/projects/archived.json'
+	create_project: 			'POST/projects.json'
+
+	get_project:				'/~primaryId~.json'
+
+
+	get_topics:					'/~primaryId~/topics.json'
+	create_message:				'POST/~primaryId~/messages.json'
+	create_comment:				'POST/~primaryId~/messages/~messageId~/comments.json'
