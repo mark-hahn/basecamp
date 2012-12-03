@@ -10,15 +10,15 @@ The Basecamp github project can be found [here](https://github.com/mark-hahn/bas
 - Supports new Basecamp JSON api (not old xml)
 - Built-in oauth2 support
 - Tools to link app to Basecamp account by visiting 37signals website
-- Supports all api requests (see status), GET, POST, and PUT
-- Terminology, params, and command names match api documentation
+- Supports all 57 api requests (GET, POST, and PUT)
+- Terminology, params, and command ops match api documentation
 - Data can be objects, streams, or files
 - Supports simultaneous multiple accounts
 
 
 ## Status (pre-alpha):
 
-It is currently usable, but it is not used in production yet and there are no unit tests. Everything has been verified to work except for some commands. The commands shown to work are the ones needed to work with accounts, projects, messages, and comments ...
+It is complete and currently usable, but it has not been used in production yet and there are no unit tests. Many commands (those relating to accounts, projects, messages, and comments) have been verified to work ...
 
 - get_projects
 - get_projects_archived
@@ -31,11 +31,10 @@ It is currently usable, but it is not used in production yet and there are no un
 - create_message
 - create_comment
 
-The rest of the commands are expected to also work as the command table is translated directly from the API docs.
+The rest of the commands are expected to work. A command table was translated directly from the API docs and the commands that have been verified to work use that table.
 
 *TODO* ...
 
-- Complete the command table
 - Tests
 - Add coding examples to this readme
 - Convenience functions for common commands
@@ -43,13 +42,15 @@ The rest of the commands are expected to also work as the command table is trans
 
 I could use some help. Tests will be hard since we can't easily mock the Basecamp api. I don't know express so someone else is going to have to add that.
 
+
 ## Installation
 
 npm install basecamp
 
+
 ## Usage
 
-The Basecamp wrapper module interface follows the Basecamp api [documentation](https://github.com/37signals/bcx-api) closely.  Refer to the api document for help understanding the commands.  The wrapper module command constants follow the documentation headings (see the req method below).
+The Basecamp wrapper module interface follows the Basecamp api [documentation](https://github.com/37signals/bcx-api) closely.  Refer to the api document for help understanding the commands.
 
 
 ### Client Class
@@ -130,6 +131,26 @@ The valid commands (ops) for an Account are listed here.  They are in the order 
 
 - get_global_events
 
+[people](https://github.com/37signals/bcx-api/blob/master/sections/people.md)
+
+- get_people
+- get_person_me
+
+[projects](https://github.com/37signals/bcx-api/blob/master/sections/projects.md)
+
+- get_projects
+- get_projects_archived
+- create_project
+
+[todolists](https://github.com/37signals/bcx-api/blob/master/sections/todolists.md)
+
+- get_todolists_all
+- get_todolists_all_completed
+
+[topics](https://github.com/37signals/bcx-api/blob/master/sections/topics.md)
+
+- get_topics_all
+
 
 ### Project Class
 
@@ -143,7 +164,7 @@ Project represents a single project in a Basecamp account.
 
 There is only one method, `req`.  It is the same method for Account, Project, Calendar, and Person classes and is documented in the "req method" section below.
 
-Valid commands (ops) for a Project are listed here.  They are in the order they appear in the api docs.
+Valid commands (ops) for a Project are listed here.  They are in the order they appear in the api docs. Note that all Account commands can also be used on Projects.
 
 [accesses](https://github.com/37signals/bcx-api/blob/master/sections/accesses.md)
 
@@ -188,6 +209,37 @@ Valid commands (ops) for a Project are listed here.  They are in the order they 
 - update_message
 - delete_message
 
+[projects](https://github.com/37signals/bcx-api/blob/master/sections/projects.md)
+
+- get_project
+- update_project
+- delete_project
+
+[todolists](https://github.com/37signals/bcx-api/blob/master/sections/todolists.md)
+
+- get_todolists
+- get_todolists_completed
+- get_todolist
+- create_todolist
+- update_todolist
+- delete_todolist
+
+[todos](https://github.com/37signals/bcx-api/blob/master/sections/todos.md)
+
+- get_todo
+- create_todo
+- update_todo
+- delete_todo
+
+[topics](https://github.com/37signals/bcx-api/blob/master/sections/topics.md)
+
+- get_topics
+
+[uploads](https://github.com/37signals/bcx-api/blob/master/sections/uploads.md)
+
+- create_uploads
+- get_upload
+
 
 ### Calendar Class
 
@@ -201,7 +253,7 @@ Calendar represents a single calendar in a Basecamp account.
 
 There is only one method, `req`.  It is the same method for Account, Project, Calendar, and Person classes and is documented in the "req method" section below.
 
-Valid commands (ops) for a Calendar are listed here.  They are in the order they appear in the api docs.
+Valid commands (ops) for a Calendar are listed here.  They are in the order they appear in the api docs. Note that all Account commands can also be used on Calendars.
 
 [accesses](https://github.com/37signals/bcx-api/blob/master/sections/accesses.md)
 
@@ -237,11 +289,20 @@ Person represents a single person in a Basecamp account.
 
 There is only one method, `req`.  It is the same method for Account, Project, Calendar, and Person classes and is documented in the "req method" section below.
 
-Valid commands (ops) for a Person are listed here.  They are in the order they appear in the api docs.
+Valid commands (ops) for a Person are listed here.  They are in the order they appear in the api docs. Note that all Account commands can also be used on Person.
 
 [events](https://github.com/37signals/bcx-api/blob/master/sections/events.md)
 
 - get_person_events
+
+[people](https://github.com/37signals/bcx-api/blob/master/sections/people.md)
+
+- get_person
+- delete_person
+
+[todolists](https://github.com/37signals/bcx-api/blob/master/sections/todolists.md)
+
+- get_todolists_with_assigned_todos
 
 
 ### req method for the classes Account, Project, Calendar, and Person
@@ -251,19 +312,19 @@ Valid commands (ops) for a Person are listed here.  They are in the order they a
     calendar.req(op, options, callback);
     person.req(op, options, callback);
 
-Finally we get to the meat of the wrapper.  `req` is the method used to perform the requests to the Basecamp api.
+`req` is the method used to perform the requests to the Basecamp api.
 
-`op` is a string that specifies the request command to use. The values are listed in the Account, Project, Calendar, and Person classes above, but you can figure them out from the api [documentation](https://github.com/37signals/bcx-api).  The op string is the section header in the docs in lower case with an underscore separating words.  For example, the command described in the section "Get message" uses "get_message" as the command string.
+`op` is a string that specifies the API request to use. The values are listed in the Account, Project, Calendar, and Person classes above.
 
 `options` specifies request parameters.  Available options include ...
 
 - `id` is a Basecamp id string. This is required for commands like get_message that refer to one specific item.
 
-- `section` is a string that is only required in the create_comment command.  It can be "messages", "calendar_events", "uploads", or "todos".
+- `section` is a string that is only used in the create_comment command.  It can be "messages", "calendar_events", "uploads", or "todos".
 
 - `query` is an optional object that will be added to the url. For example, in the `get_topics` command you will need to specify a page when there are 50 or more topics.  The query option might look like `{page:2}`.  This would create a url like `/projects/1/topics.json?page=2`.
 
-- `headers` is a normal headers object, such as {'Content-Length': 12453}.
+- `headers` is a normal headers object, such as {'Content-Length': 12453}. Any value here takes precedence over any values generated automatically.
 
 - `data` is a data object used for the request body in POST/PUT commands. Note that the Content-Type is set to 'application/json' and the Content-Length is automatically provided. Either can be overriden with the `headers` option.
 
@@ -271,7 +332,7 @@ Finally we get to the meat of the wrapper.  `req` is the method used to perform 
 
 - `file` is a path to a file. When present the contents of the file are sent as the body.  If the Content-Length header is not set it will be set for you.  The Content-Type is not set and will usually need to be provided.
 
-The `callback` signature is `(error, result)`.  `error` is a standard error param from a node callback. `result` is a javascript object with the api request results.  The contents of `result` varies based on the command.  See the Basecamp [documentation](https://github.com/37signals/bcx-api) for details.  Only JSON callbacks are supported for now.
+The `callback` signature is `(error, result)`.  `error` is a standard error param from a node callback. `result` is a javascript object with the api request results.  The contents of `result` vary based on the command.  See the Basecamp [documentation](https://github.com/37signals/bcx-api) for details. Note that some commands require multiple requests (see query option above) when more than 50 items are returned.
 
 
 ## Credits

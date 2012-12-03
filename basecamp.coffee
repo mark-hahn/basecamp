@@ -282,14 +282,41 @@ opPaths =
 	update_message:				'PUT/~primaryId~/messages/~secondaryId~.json'
 	delete_message:				'DELETE/~primaryId~/messages/~secondaryId~.json'
 
+	# https://github.com/37signals/bcx-api/blob/master/sections/people.md
+	get_people:					'/people.json'
+	get_person:					'/~primaryId~.json'
+	get_person_me:				'/people/me.json'
+	delete_person:				'DELETE/~primaryId~.json'
 
+	# https://github.com/37signals/bcx-api/blob/master/sections/projects.md
 	get_projects: 				'/projects.json'
 	get_projects_archived: 		'/projects/archived.json'
-	create_project: 			'POST/projects.json'
-
 	get_project:				'/~primaryId~.json'
+	create_project: 			'POST/projects.json'
+	update_project:				'PUT/~primaryId~.json'
+	delete_project:				'DELETE/~primaryId~.json'
 
+	# https://github.com/37signals/bcx-api/blob/master/sections/todolists.md
+	get_todolists:				'/~primaryId~/todolists.json'
+	get_todolists_completed:	'/~primaryId~/todolists/completed.json'
+	get_todolists_all:			'/todolists.json'
+	get_todolists_all_completed: 		'/todolists/completed.json'
+	get_todolists_with_assigned_todos: 	'/~primaryId~/assigned_todos.json'
+	get_todolist:				'/~primaryId~/todolists/~secondaryId~.json'
+	create_todolist: 			'POST/~primaryId~/todolists.json'
+	update_todolist:			'PUT/~primaryId~/todolists/~secondaryId~.json'
+	delete_todolist:			'DELETE/~primaryId~/todolists/~secondaryId~.json'
 
+	# https://github.com/37signals/bcx-api/blob/master/sections/todos.md
+	get_todo:					'/~primaryId~/todos/~secondaryId~.json'
+	create_todo: 				'POST/~primaryId~/todos.json'
+	update_todo:				'PUT/~primaryId~/todos/~secondaryId~.json'
+	delete_todo:				'DELETE/~primaryId~/todos/~secondaryId~.json'
+
+	# https://github.com/37signals/bcx-api/blob/master/sections/topics.md
 	get_topics:					'/~primaryId~/topics.json'
-	create_message:				'POST/~primaryId~/messages.json'
-	create_comment:				'POST/~primaryId~/messages/~messageId~/comments.json'
+	get_topics_all:				'/topics.json'
+
+	# https://github.com/37signals/bcx-api/blob/master/sections/uploads.md
+	create_uploads:				'POST/~primaryId~/uploads.json'
+	get_upload:					'~primaryId~/uploads/~secondaryId~.json'
