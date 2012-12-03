@@ -24,14 +24,26 @@ exports.Client = class Client
 
 	authNewCallback: (req, res, cb) ->
 		query = url.parse(req.url, true).query
+
+		state = JSON.parse decodeURIComponent query.state ? '{}'
+
+		if query.error is 'access_denied'
+			res.end  """
+				<html><head>
+					<meta http-equiv="REFRESH" content="0;url=#{state.href ? '/'}">
+				</head><body></body></html> """
+			return
+
 		if not query.code or query.error
 			console.log 'basecamp: err in authorization/new callback: ' + req.url
 			res.end()
 			cb?()
 			return
+
 		@_getToken query, null, (err, userInfo, html) ->
 			res.end html
 			cb? err, userInfo
+
 
 	_getToken: (cbQuery, refresh_token, cb) ->
 		tokenUrl = "https://launchpad.37signals.com/authorization/token" +
