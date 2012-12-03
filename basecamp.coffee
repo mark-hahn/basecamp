@@ -119,6 +119,10 @@ exports.Account = class Account
 	req: (op, options, cb) ->
 		if not @account then cb 'basecamp: req error, no account'; return
 
+		if typeof options is 'function'
+			cb = options
+			options = {}
+
 		if not (path = opPaths[op])
 			cb 'basecamp: req error, invalid opcode ' + op
 			return
@@ -150,7 +154,7 @@ exports.Account = class Account
 		for replacement in urlReplacements when path.indexOf(replacement[0]) isnt -1
 			if not replacement[1]
 				if replacement[0] isnt '~optionalId~'
-					cb 'option ' + replacement[0][1..-2] + ' missing'
+					cb 'option ' + replacement[0][1..-2] + ' missing for ' + path
 					return
 				path = path.replace '/' + replacement[0], ''
 			else
@@ -233,18 +237,21 @@ exports.Account = class Account
 
 
 exports.Project = class Project
-	constructor: (@account, @projectId) -> @primaryId = 'projects/' + @projectId
-	req: (opts, cb) -> @account.req opts, cb
+	constructor: (@account, @projectId) ->
+					@account.primaryId = 'projects/'  + @projectId
+	req: (args...) -> @account.req args...
 
 
 exports.Calendar = class Calendar
-	constructor: (@account, @calendarId) -> @primaryId = 'calendars/' + @calendarId
-	req: (opts, cb) -> @account.req opts, cb
+	constructor: (@account, @calendarId) ->
+					@account.primaryId = 'calendars/' + @calendarId
+	req: (args...) -> @account.req args...
 
 
 exports.Person = class Person
-	constructor: (@account, @personId) -> @primaryId = 'people/' + @personId
-	req: (opts, cb) -> @account.req opts, cb
+	constructor: (@account, @personId)   ->
+					@account.primaryId = 'people/'    + @personId
+	req: (args...) -> @account.req args...
 
 
 opPaths =
@@ -289,7 +296,7 @@ opPaths =
 	get_person_events:			'/~primaryId~/events.json'
 
 	# https://github.com/37signals/bcx-api/blob/master/sections/messages.md
-	get_message:				'/~primaryId~/messages/~messageId~.json'
+	get_message:				'/~primaryId~/messages/~secondaryId~.json'
 	create_message:				'POST/~primaryId~/messages.json'
 	update_message:				'PUT/~primaryId~/messages/~secondaryId~.json'
 	delete_message:				'DELETE/~primaryId~/messages/~secondaryId~.json'
