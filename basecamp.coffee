@@ -25,7 +25,14 @@ exports.Client = class Client
 	authNewCallback: (req, res, cb) ->
 		query = url.parse(req.url, true).query
 
-		state = JSON.parse decodeURIComponent query.state ? '{}'
+		stateStr = decodeURIComponent query.state ? '{}'
+		try
+			state = JSON.parse decodeURIComponent stateStr
+		catch e
+			console.log 'basecamp: err in authorization/new callback query.state: ' + stateStr
+			res.end()
+			cb? 'query.state err'
+			return
 
 		if query.error is 'access_denied'
 			res.end  """
@@ -37,7 +44,7 @@ exports.Client = class Client
 		if not query.code or query.error
 			console.log 'basecamp: err in authorization/new callback: ' + req.url
 			res.end()
-			cb?()
+			cb? 'query.error'
 			return
 
 		@_getToken query, null, (err, userInfo, html) ->
@@ -73,7 +80,14 @@ exports.Client = class Client
 				console.log '\nbasecamp: token request error\n', {error, bodyJSON, cbQuery, refresh_token}
 				cb? 'token request error'
 				return
-			tokenResp = JSON.parse bodyJSON
+			try
+				tokenResp = JSON.parse bodyJSON
+			catch e
+				console.log '\nbasecamp: token request resp parse error\n',
+							{e, bodyJSON, cbQuery, refresh_token}
+				cb? 'token request resp parse error'
+				return
+
 			request
 				url: 'https://launchpad.37signals.com/authorization.json'
 				headers: Authorization: 'Bearer ' + tokenResp.access_token
@@ -86,13 +100,22 @@ exports.Client = class Client
 				userInfo = _.extend tokenResp, JSON.parse(bodyJSON), (if state then {state})
 				cb? null, userInfo, html
 
+	getUserInfo: (refresh_token, cb) ->
+		@_getToken null, refresh_token, (err, userInfo) ->
+			if err
+				console.log '\nbasecamp: getUserInfo _getToken error', err
+				cb? '_getToken error'
+				return
+
+			cb null, userInfo
+
 
 exports.Account = class Account
 
 	constructor: (@client, @accountId, refresh_token, cb) ->
 		@account = null
 
-		client._getToken null, refresh_token, (@err, @userInfo) =>
+		client.getUserInfo refresh_token, (@err, @userInfo) =>
 			if @err or not @userInfo.accounts
 				console.log '\nbasecamp: _getToken error',
 							@accountId, refresh_token, @err, @userInfo
