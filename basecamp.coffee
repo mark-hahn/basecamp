@@ -11,6 +11,32 @@ request = require 'request'
 
 opPaths = null
 
+getAuthUserInfo = (access_token, cb) ->
+	request
+		url: 'https://launchpad.37signals.com/authorization.json'
+		headers: Authorization: 'Bearer ' + access_token
+
+	, (error, response, bodyIn) ->
+
+		console.log '\nbasecamp: getAuthUserInfo resp', {error, bodyIn}
+
+		if error
+			msg =  '\nbasecamp: error in getAuthUserInfo\n'
+			console.log msg, {access_token, error, bodyIn}
+			cb msg
+			return
+
+		try
+			userInfo =  JSON.parse bodyIn
+		catch e
+			msg =  '\nbasecamp: getAuthUserInfo err in JSON.parse\n'
+			console.log msg, {access_token, bodyIn}
+			cb msg
+			return
+
+		cb null, userInfo
+
+
 exports.Client = class Client
 
 	constructor: (@client_id, @client_secret, @redirect_uri, @userAgent) ->
@@ -57,7 +83,9 @@ exports.Client = class Client
 					"?client_id=" 		+ @client_id +
 					"&redirect_uri=" 	+ encodeURIComponent(@redirect_uri) +
 					"&client_secret=" 	+ @client_secret
+
 		form = {@client_id, @redirect_uri, @client_secret}
+
 		if cbQuery
 			tokenUrl += '&type=web_server&code=' + cbQuery.code
 			_.extend form, code: cbQuery.code
@@ -70,41 +98,47 @@ exports.Client = class Client
 		else
 			tokenUrl += '&type=refresh&refresh_token=' + refresh_token
 			_.extend form, {refresh_token}
+
+		console.log '\nbasecamp: POST request params', {tokenUrl, form}
+
 		request
 			method: 'POST'
 			uri:    tokenUrl
 			form:   form
-		, (error, response, bodyJSON) ->   # error authorization_expired
+		, (error, response, bodyIn) ->   # error authorization_expired
 
-			if error or bodyJSON.indexOf('"error":') isnt -1
-				console.log '\nbasecamp: token request error\n', {error, bodyJSON, cbQuery, refresh_token}
+			console.log '\nbasecamp: token request resp', {error, bodyIn}
+
+			if error or bodyIn.indexOf('"error":') isnt -1
+				console.log '\nbasecamp: token request error ',
+					{error, bodyIn, cbQuery, refresh_token}
 				cb? 'token request error'
 				return
+
 			try
-				tokenResp = JSON.parse bodyJSON
+				tokenResp = JSON.parse bodyIn
 			catch e
 				console.log '\nbasecamp: token request resp parse error\n',
-							{e, bodyJSON, cbQuery, refresh_token}
+							{e, bodyIn, cbQuery, refresh_token}
 				cb? 'token request resp parse error'
 				return
 
-			request
-				url: 'https://launchpad.37signals.com/authorization.json'
-				headers: Authorization: 'Bearer ' + tokenResp.access_token
-			, (error, response, bodyJSON) ->
-				if error or bodyJSON.indexOf('error:') isnt -1
-					msg =  '\nbasecamp: error from authorization request\n'
-					console.log msg, {cbQuery, refresh_token, error, bodyJSON}
-					cb? msg
-					return
-				userInfo = _.extend tokenResp, JSON.parse(bodyJSON), (if state then {state})
+			getAuthUserInfo tokenResp.access_token, (err, userInfoIn) ->
+
+				console.log '\nbasecamp: getAuthUserInfo resp', {err, userInfoIn}
+
+				if err then cb? 'getAuthUserInfo tokenResp err'; return
+
+				userInfo = _.extend tokenResp, userInfoIn, (if state then {state})
 				cb? null, userInfo, html
 
 	getUserInfo: (refresh_token, cb) ->
+		console.log 'basecamp: getUserInfo refresh_token ' + refresh_token
+
 		@_getToken null, refresh_token, (err, userInfo) ->
-			if err
-				console.log '\nbasecamp: getUserInfo _getToken error', err
-				cb? '_getToken error'
+			if err or not userInfo?.refresh_token
+				log 'bcr: getUserInfo err or missing refresh_token', {err, userInfo}
+				cb 'err in getUserInfo'
 				return
 
 			cb null, userInfo
@@ -112,31 +146,41 @@ exports.Client = class Client
 
 exports.Account = class Account
 
-	constructor: (@client, @accountId, refresh_token, cb) ->
+	constructor: (@client, @accountId, @access_token, cb) ->
 		@account = null
 
-		client.getUserInfo refresh_token, (@err, @userInfo) =>
+		console.log '\nbasecamp: new acct constructor', {@accountId, @access_token}
+
+		getAuthUserInfo @access_token, (err, @userInfo) =>
+
+			if err then cb 'new acct getAuthUserInfo err'; return
+
+			console.log '\nbasecamp: new acct getAuthUserInfo', @userInfo
+
 			if @err or not @userInfo.accounts
-				console.log '\nbasecamp: _getToken error',
-							@accountId, refresh_token, @err, @userInfo
-				cb? '_getToken error'
+				console.log '\nbasecamp: new acct getAuthUserInfo error or no accounts',
+								@accountId, @err, @userInfo
+				cb? 'new acct getAuthUserInfo error'
 				return
+
 			for account in @userInfo.accounts
 				if account.id is @accountId
 					@account = account
 					break
+
 			if not @account
-				@err = 'basecamp: account not found, ' +
-						@userInfo.identity.email_address + ', ' + @accountId
-				console.log '\nbasecamp ' + @err
-				cb @err
+				console.log '\nbasecamp: account not found, ' +
+							 @userInfo.identity.email_address + ', ' + @accountId
+				cb 'basecamp: account not found'
 				return
+
 			if @account?.product isnt 'bcx'
 				@err = 'basecamp: error, product ' + account?.product + ' not supported, ' +
 							@userInfo.identity.email_address + ', ' + @accountId
 				console.log '\nbasecamp ' + @err
 				cb @err
 				return
+
 			cb null, @
 
 	req: (op, options, cb) ->
@@ -152,10 +196,12 @@ exports.Account = class Account
 
 		{section, id, query, headers, body, stream, file} = options
 
+		console.log 'basecamp: req @ ',  {op, acctObj: @}
+
 		requestOpts =
 			headers:
 				'User-Agent':  @client.userAgent
-				Authorization: 'Bearer ' + @userInfo.access_token
+				Authorization: 'Bearer ' + @access_token
 
 		if path[0] in ['P', 'D']
 			if not body and not stream and not file
@@ -194,17 +240,18 @@ exports.Account = class Account
 
 		if headers then _.extend requestOpts.headers, headers
 
-		reqCB = (error, response, bodyTxt) =>
+		reqCB = (error, response, bodyIn) =>
 
-#			console.log 'basecamp: req callback, err: ', error, ', resp type', (typeof bodyTxt)
+			console.log 'basecamp: req callback, err: ', error, ', bodyIn type', (typeof bodyIn)
 
-			if typeof bodyTxt is 'string'
-				try
-					body = JSON.parse bodyTxt
-				catch e
-					error = bodyTxt
-			else
-				body = bodyTxt
+			if not error
+				if typeof bodyIn is 'string'
+					try
+						body = JSON.parse bodyIn
+					catch e
+						error = bodyIn
+				else
+					body = bodyIn
 
 			if error
 				console.log '\nbasecamp: req error, bad response ' + op +
@@ -212,12 +259,12 @@ exports.Account = class Account
 				cb error
 				return
 
-#            console.log '\nbasecamp: req response ' + op + ' ' +
-#                        @userInfo.identity.email_address + ' ' + @account.name, body
+			console.log '\nbasecamp: response ' + op + ' ' +
+                        @userInfo.identity.email_address + ' ' + @account.name, body
 
 			cb null, body
 
-#        console.log '\n\nbasecamp: req url ' + requestOpts.url, {stream, file, requestOpts}
+		console.log '\n\nbasecamp: req url ', {op, stream, file, requestOpts}
 
 		if stream or file
 			abortStream = no
@@ -226,7 +273,7 @@ exports.Account = class Account
 				reqst = stream.pipe request requestOpts
 
 				reqst.on 'response', (resp) ->
-					if resp.statusCode isnt 200
+					if resp.statusCode >= 400
 						reqCB 'bad stream status code ' + resp.statusCode + ', ' + requestOpts.url
 						abortStream = yes
 
