@@ -196,7 +196,7 @@ exports.Account = class Account
 
 		{section, id, query, headers, body, stream, file} = options
 
-		console.log 'basecamp: req @ ',  {op, acctObj: @}
+		console.log 'basecamp: req method ',  {op, accountInstance: @}
 
 		requestOpts =
 			headers:
@@ -242,7 +242,7 @@ exports.Account = class Account
 
 		reqCB = (error, response, bodyIn) =>
 
-			console.log 'basecamp: req callback, err: ', error, ', bodyIn type', (typeof bodyIn)
+			console.log 'basecamp: req callback, err:', error, '/ bodyIn-type:', (typeof bodyIn), '/ status:', response?.statusCode
 
 			if not error
 				if typeof bodyIn is 'string'
@@ -264,7 +264,7 @@ exports.Account = class Account
 
 			cb null, body
 
-		console.log '\n\nbasecamp: req url ', {op, stream, file, requestOpts}
+		console.log '\n\nbasecamp: pre-request ', {op, stream, file, requestOpts}
 
 		if stream or file
 			abortStream = no
