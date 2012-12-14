@@ -18,7 +18,7 @@ getAuthUserInfo = (access_token, cb) ->
 
 	, (error, response, bodyIn) ->
 
-		console.log '\nbasecamp: getAuthUserInfo resp', {error, bodyIn}
+#		console.log '\nbasecamp: getAuthUserInfo resp', {error, bodyIn}
 
 		if error
 			msg =  '\nbasecamp: error in getAuthUserInfo\n'
@@ -99,7 +99,7 @@ exports.Client = class Client
 			tokenUrl += '&type=refresh&refresh_token=' + refresh_token
 			_.extend form, {refresh_token}
 
-		console.log '\nbasecamp: POST request params', {tokenUrl, form}
+#		console.log '\nbasecamp: POST request params', {tokenUrl, form}
 
 		request
 			method: 'POST'
@@ -107,7 +107,7 @@ exports.Client = class Client
 			form:   form
 		, (error, response, bodyIn) ->   # error authorization_expired
 
-			console.log '\nbasecamp: token request resp', {error, bodyIn}
+#			console.log '\nbasecamp: token request resp', {error, bodyIn}
 
 			if error or bodyIn.indexOf('"error":') isnt -1
 				console.log '\nbasecamp: token request error ',
@@ -125,7 +125,7 @@ exports.Client = class Client
 
 			getAuthUserInfo tokenResp.access_token, (err, userInfoIn) ->
 
-				console.log '\nbasecamp: getAuthUserInfo resp', {err, userInfoIn}
+#				console.log '\nbasecamp: getAuthUserInfo resp', {err, userInfoIn}
 
 				if err then cb? 'getAuthUserInfo tokenResp err'; return
 
@@ -133,7 +133,7 @@ exports.Client = class Client
 				cb? null, userInfo, html
 
 	getUserInfo: (refresh_token, cb) ->
-		console.log 'basecamp: getUserInfo refresh_token ' + refresh_token
+#		console.log 'basecamp: getUserInfo refresh_token ' + refresh_token
 
 		@_getToken null, refresh_token, (err, userInfo) ->
 			if err or not userInfo?.refresh_token
@@ -149,13 +149,13 @@ exports.Account = class Account
 	constructor: (@client, @accountId, @access_token, cb) ->
 		@account = null
 
-		console.log '\nbasecamp: new acct constructor', {@accountId, @access_token}
+#		console.log '\nbasecamp: new acct constructor', {@accountId, @access_token}
 
 		getAuthUserInfo @access_token, (err, @userInfo) =>
 
 			if err then cb 'new acct getAuthUserInfo err'; return
 
-			console.log '\nbasecamp: new acct getAuthUserInfo', @userInfo
+#			console.log '\nbasecamp: new acct getAuthUserInfo', @userInfo
 
 			if @err or not @userInfo.accounts
 				console.log '\nbasecamp: new acct getAuthUserInfo error or no accounts',
@@ -196,7 +196,7 @@ exports.Account = class Account
 
 		{section, id, query, headers, body, stream, file} = options
 
-		console.log 'basecamp: req method ',  {op, accountInstance: @}
+#		console.log 'basecamp: req method ',  {op, accountInstance: @}
 
 		requestOpts =
 			headers:
@@ -259,12 +259,12 @@ exports.Account = class Account
 				cb error
 				return
 
-			console.log '\nbasecamp: response ' + op + ' ' +
-                        @userInfo.identity.email_address + ' ' + @account.name, body
+#			console.log '\nbasecamp: response ' + op + ' ' +
+#                        @userInfo.identity.email_address + ' ' + @account.name, body
 
 			cb null, body
 
-		console.log '\n\nbasecamp: pre-request ', {op, stream, file, requestOpts}
+#		console.log '\n\nbasecamp: pre-request ', {op, stream, file, requestOpts}
 
 		if stream or file
 			abortStream = no
