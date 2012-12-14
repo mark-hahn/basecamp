@@ -16,7 +16,7 @@ The Basecamp github project can be found [here](https://github.com/mark-hahn/bas
 - Supports simultaneous multiple accounts
 
 
-## Status (pre-alpha):
+## Status Alpha
 
 It is complete and currently usable, but it has not been used in production yet and there are no unit tests. Many commands (those relating to accounts, projects, messages, and comments) have been verified to work ...
 
