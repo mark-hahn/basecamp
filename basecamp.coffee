@@ -264,8 +264,6 @@ exports.Account = class Account
 
 			cb null, body
 
-		console.log 'basecamp: pre-request json', op, requestOpts.json
-
 #		console.log '\nbasecamp: pre-request ', {op, stream: stream?, file, requestOpts}
 
 		if stream or file
